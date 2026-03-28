@@ -16,8 +16,15 @@ import saleRoutes from './routes/saleRoutes.js';
 const app = express();
 const PORT = 3000;
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173'
+];
+
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(morgan('dev'));
