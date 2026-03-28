@@ -12,10 +12,10 @@
     "build:frontend": "cd frontend && npm run build",
     "start": "cd backend && npm run start",
     "start:frontend": "cd frontend && npm run preview",
-    "start:prod": "npm run build && npm run start:backend:prod & npm run start:frontend",
+    "start:prod": "npm run build && start /B npm run start:backend:prod && npm run start:frontend",
     "start:backend": "cd backend && npm run start",
     "start:backend:prod": "cd backend && npm run start:prod",
-    "prod": "npm run build && npm run start:backend:prod & npm run start:frontend"
+    "prod": "npm run build && start /B npm run start:backend:prod && npm run start:frontend"
   },
   "keywords": ["bisuteria", "inventory", "sales"],
   "author": "",
