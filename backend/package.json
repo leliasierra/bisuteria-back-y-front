@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/index.js",
     "build": "tsc && node -e \"require('fs').cpSync('db', 'dist/db', {recursive: true})\"",
-    "start": "NODE_ENV=production node dist/index.js",
-    "prod": "npm run build && npm start"
+    "start": "node dist/index.js",
+    "prod": "npm run build && npm run start:prod",
+    "start:prod": "set NODE_ENV=production&& node dist/index.js"
   },
   "keywords": [],
   "author": "",
