@@ -6,12 +6,17 @@
 import JsonDb from '@kreisler/js-jsondb';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, resolve } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const db = new JsonDb(join(__dirname, '../../db'));
+const isProduction = process.env.NODE_ENV === 'production';
+const dbPath = isProduction 
+  ? resolve(__dirname, '../db') 
+  : resolve(__dirname, '../../db');
+
+const db = new JsonDb(dbPath);
 
 const initializeData = () => {
   const products = db.select('products');

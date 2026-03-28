@@ -1,12 +1,13 @@
 {
-  "name": "ga7-220501096-aa5-ev03",
+  "name": "bisuteria-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/index.js",
+  "description": "Backend - Sistema de Gestión Bisutería",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node src/index.js",
     "dev": "tsx watch src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc && node -e \"require('fs').cpSync('db', 'dist/db', {recursive: true})\"",
+    "start": "NODE_ENV=production node dist/index.js",
+    "prod": "npm run build && npm start"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "typescript": "^5.0.0"
   }
 }
