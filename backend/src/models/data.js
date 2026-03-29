@@ -74,7 +74,13 @@ export const getProductById = (id) => {
  * @returns {Product}
  */
 export const createProduct = (data) => {
-  const product = { ...data, id: getNextId('products') };
+  const now = new Date().toISOString();
+  const product = { 
+    ...data, 
+    id: getNextId('products'),
+    createdAt: data.createdAt || now,
+    updatedAt: data.updatedAt || now
+  };
   db.insert('products', product);
   return product;
 };
@@ -85,7 +91,8 @@ export const createProduct = (data) => {
  * @returns {Product | null}
  */
 export const updateProduct = (id, data) => {
-  db.update('products', (p) => p.id === id, data);
+  const now = new Date().toISOString();
+  db.update('products', (p) => p.id === id, { ...data, updatedAt: now });
   return getProductById(id);
 };
 
@@ -118,7 +125,12 @@ export const getSaleById = (id) => {
  * @returns {Sale}
  */
 export const createSale = (data) => {
-  const sale = { ...data, id: getNextId('sales') };
+  const now = new Date().toISOString();
+  const sale = { 
+    ...data, 
+    id: getNextId('sales'),
+    createdAt: data.createdAt || now
+  };
   db.insert('sales', sale);
   return sale;
 };

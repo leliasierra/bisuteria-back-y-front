@@ -9,6 +9,7 @@ import { z } from 'zod';
  * @property {number} unitPrice
  * @property {number} total
  * @property {string} date
+ * @property {string} createdAt
  */
 
 /**
@@ -20,6 +21,7 @@ import { z } from 'zod';
 export const saleSchema = z.object({
   productId: z.number().int().positive('El ID del producto debe ser positivo'),
   quantity: z.number().int().positive('La cantidad debe ser mayor a 0'),
+  createdAt: z.string().optional(),
 });
 
 export const saleIdSchema = z.object({

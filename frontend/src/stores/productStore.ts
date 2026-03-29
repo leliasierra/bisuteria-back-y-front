@@ -9,6 +9,8 @@ export interface Product {
   price: number
   stock: number
   minStock: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 interface ProductStore {

@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { FaDollarSign, FaArrowUp, FaShoppingCart, FaPlus, FaTrash, FaBox, FaExclamationTriangle } from "react-icons/fa"
+import { FaDollarSign, FaArrowUp, FaShoppingCart, FaPlus, FaTrash, FaBox, FaExclamationTriangle, FaSearch, FaSortAmountUp, FaSortAmountDown } from "react-icons/fa"
 import { useSaleStore } from "@/stores/saleStore"
 import { useProductStore } from "@/stores/productStore"
 
@@ -27,6 +27,32 @@ export function SalesModule() {
   const [quantity, setQuantity] = useState<string>("")
   const [showSuccess, setShowSuccess] = useState(false)
   const [showError, setShowError] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterProduct, setFilterProduct] = useState("")
+  const [sortField, setSortField] = useState<"date" | "total" | "productName" | "createdAt">("createdAt")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+
+  const filteredSales = sales
+    .filter(sale => {
+      const matchesSearch = sale.productName.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesProduct = !filterProduct || sale.productId.toString() === filterProduct
+      return matchesSearch && matchesProduct
+    })
+    .sort((a, b) => {
+      let comparison = 0
+      if (sortField === "date") {
+        comparison = a.date.localeCompare(b.date)
+      } else if (sortField === "total") {
+        comparison = a.total - b.total
+      } else if (sortField === "productName") {
+        comparison = a.productName.localeCompare(b.productName)
+      } else if (sortField === "createdAt") {
+        const dateA = a.createdAt || ''
+        const dateB = b.createdAt || ''
+        comparison = dateA.localeCompare(dateB)
+      }
+      return sortDirection === "asc" ? comparison : -comparison
+    })
 
   const totalRevenue = sales.reduce((acc, sale) => acc + sale.total, 0)
   const totalItems = sales.reduce((acc, sale) => acc + sale.quantity, 0)
@@ -222,6 +248,62 @@ export function SalesModule() {
           <CardDescription>Lista de ventas realizadas</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-wrap gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar por producto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="min-w-[150px]">
+              <select
+                value={filterProduct}
+                onChange={(e) => setFilterProduct(e.target.value)}
+                className="w-full h-10 px-3 border rounded-md bg-background"
+              >
+                <option value="">Todos los productos</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>{product.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-1">
+              <select
+                value={sortField}
+                onChange={(e) => setSortField(e.target.value as "date" | "total" | "productName" | "createdAt")}
+                className="h-10 px-3 border rounded-md bg-background"
+              >
+                <option value="createdAt">Fecha</option>
+                <option value="date">Fecha (date)</option>
+                <option value="productName">Producto</option>
+                <option value="total">Total</option>
+              </select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+                title={sortDirection === "asc" ? "Ascendente" : "Descendente"}
+              >
+                {sortDirection === "asc" ? <FaSortAmountUp className="h-4 w-4" /> : <FaSortAmountDown className="h-4 w-4" />}
+              </Button>
+            </div>
+            {(searchTerm || filterProduct) && (
+              <Button
+                variant="ghost"
+                onClick={() => { setSearchTerm(""); setFilterProduct(""); }}
+              >
+                Limpiar
+              </Button>
+            )}
+          </div>
+          <div className="text-sm text-muted-foreground mb-2">
+            Mostrando {filteredSales.length} de {sales.length} ventas
+          </div>
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5">
@@ -233,7 +315,14 @@ export function SalesModule() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sales.map((sale) => (
+              {filteredSales.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    No se encontraron ventas
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredSales.map((sale) => (
                 <TableRow key={sale.id} className="hover:bg-primary/5">
                   <TableCell className="font-medium">{sale.productName}</TableCell>
                   <TableCell>{sale.quantity}</TableCell>
@@ -265,7 +354,8 @@ export function SalesModule() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

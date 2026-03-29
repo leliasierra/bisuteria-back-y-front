@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { FaBox, FaPlus, FaTrash, FaShoppingCart, FaPen, FaCheck, FaChevronDown } from "react-icons/fa"
+import { FaBox, FaPlus, FaTrash, FaShoppingCart, FaPen, FaCheck, FaChevronDown, FaSearch, FaSortAmountUp, FaSortAmountDown } from "react-icons/fa"
 import { useProductStore } from "@/stores/productStore"
 
 function Combobox({ 
@@ -104,6 +104,33 @@ export function ProductsModule() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editData, setEditData] = useState({ name: "", material: "", category: "", price: "", stock: "", minStock: "5" })
   const [showSuccess, setShowSuccess] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterCategory, setFilterCategory] = useState("")
+  const [sortField, setSortField] = useState<"name" | "price" | "stock" | "createdAt">("createdAt")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+
+  const filteredProducts = products
+    .filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.material.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCategory = !filterCategory || product.category === filterCategory
+      return matchesSearch && matchesCategory
+    })
+    .sort((a, b) => {
+      let comparison = 0
+      if (sortField === "name") {
+        comparison = a.name.localeCompare(b.name)
+      } else if (sortField === "price") {
+        comparison = a.price - b.price
+      } else if (sortField === "stock") {
+        comparison = a.stock - b.stock
+      } else if (sortField === "createdAt") {
+        const dateA = a.createdAt || ''
+        const dateB = b.createdAt || ''
+        comparison = dateA.localeCompare(dateB)
+      }
+      return sortDirection === "asc" ? comparison : -comparison
+    })
 
   const existingMaterials = [...new Set(products.map(p => p.material))]
   const existingCategories = [...new Set(products.map(p => p.category))]
@@ -279,58 +306,125 @@ export function ProductsModule() {
           <CardDescription>Productos disponibles con control de stock</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
-                  product.stock <= product.minStock 
-                    ? "border-red-300 bg-red-50" 
-                    : "border-primary/10 hover:bg-primary/5"
-                }`}
-              >
-                <div>
-                  <p className="font-medium">{product.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Material: {product.material} | Categoría: {product.category}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-semibold text-primary">${product.price.toLocaleString()}</p>
-                    <p className={`text-sm ${product.stock <= product.minStock ? "text-red-500 font-bold" : ""}`}>
-                      Stock: {product.stock} (Min: {product.minStock})
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="icon" onClick={() => startEdit(product)}>
-                      <FaPen className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="icon">
-                          <FaTrash className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acción eliminará "{product.name}" del inventario.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteProduct(product.id)}>
-                            Eliminar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
+          <div className="flex flex-wrap gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar por nombre o material..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            ))}
+            </div>
+            <div className="min-w-[150px]">
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="w-full h-10 px-3 border rounded-md bg-background"
+              >
+                <option value="">Todas las categorías</option>
+                {existingCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-1">
+              <select
+                value={sortField}
+                onChange={(e) => setSortField(e.target.value as "name" | "price" | "stock" | "createdAt")}
+                className="h-10 px-3 border rounded-md bg-background"
+              >
+                <option value="createdAt">Fecha</option>
+                <option value="name">Nombre</option>
+                <option value="price">Precio</option>
+                <option value="stock">Stock</option>
+              </select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+                title={sortDirection === "asc" ? "Ascendente" : "Descendente"}
+              >
+                {sortDirection === "asc" ? <FaSortAmountUp className="h-4 w-4" /> : <FaSortAmountDown className="h-4 w-4" />}
+              </Button>
+            </div>
+            {(searchTerm || filterCategory) && (
+              <Button
+                variant="ghost"
+                onClick={() => { setSearchTerm(""); setFilterCategory(""); }}
+              >
+                Limpiar
+              </Button>
+            )}
+          </div>
+          <div className="text-sm text-muted-foreground mb-2">
+            Mostrando {filteredProducts.length} de {products.length} productos
+          </div>
+          <div className="space-y-2">
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No se encontraron productos
+              </div>
+            ) : (
+              filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                    product.stock <= product.minStock 
+                      ? "border-red-300 bg-red-50" 
+                      : "border-primary/10 hover:bg-primary/5"
+                  }`}
+                >
+                  <div>
+                    <p className="font-medium">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Material: {product.material} | Categoría: {product.category}
+                    </p>
+                    {product.createdAt && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Creado: {new Date(product.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-semibold text-primary">${product.price.toLocaleString()}</p>
+                      <p className={`text-sm ${product.stock <= product.minStock ? "text-red-500 font-bold" : ""}`}>
+                        Stock: {product.stock} (Min: {product.minStock})
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="icon" onClick={() => startEdit(product)}>
+                        <FaPen className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="icon">
+                            <FaTrash className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción eliminará "{product.name}" del inventario.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteProduct(product.id)}>
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

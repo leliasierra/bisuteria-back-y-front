@@ -9,6 +9,7 @@ export interface Sale {
   unitPrice: number
   total: number
   date: string
+  createdAt?: string
 }
 
 interface SaleStore {

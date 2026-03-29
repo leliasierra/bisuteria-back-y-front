@@ -9,6 +9,8 @@ import { z } from 'zod';
  * @property {number} price
  * @property {number} stock
  * @property {number} minStock
+ * @property {string} createdAt
+ * @property {string} updatedAt
  */
 
 /**
@@ -28,6 +30,8 @@ export const productSchema = z.object({
   price: z.number().positive('El precio debe ser positivo'),
   stock: z.number().int().nonnegative('El stock debe ser un entero no negativo'),
   minStock: z.number().int().nonnegative('El stock mínimo debe ser un entero no negativo'),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export const productUpdateSchema = productSchema.partial();
