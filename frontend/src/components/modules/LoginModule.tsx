@@ -14,11 +14,64 @@ export function LoginModule() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [isRegister, setIsRegister] = useState(false)
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({})
   const login = useAuthStore((state) => state.login)
+
+  const validateUsername = (value: string) => {
+    if (isRegister && value.length > 0 && value.length < 3) {
+      return 'El usuario debe tener al menos 3 caracteres'
+    }
+    return undefined
+  }
+
+  const validatePassword = (value: string) => {
+    if (isRegister && value.length > 0 && value.length < 6) {
+      return 'La contraseña debe tener al menos 6 caracteres'
+    }
+    return undefined
+  }
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value)
+    if (isRegister) {
+      setErrors(prev => ({ ...prev, username: validateUsername(value) }))
+    }
+  }
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    if (isRegister) {
+      setErrors(prev => ({ ...prev, password: validatePassword(value) }))
+    }
+  }
+
+  const validateForm = () => {
+    if (!isRegister) return true
+    
+    const newErrors: { username?: string; password?: string } = {}
+    let isValid = true
+
+    if (username.length < 3) {
+      newErrors.username = 'El usuario debe tener al menos 3 caracteres'
+      isValid = false
+    }
+    if (password.length < 6) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+      isValid = false
+    }
+
+    setErrors(newErrors)
+    return isValid
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    
+    if (!validateForm()) {
+      return
+    }
+
     setLoading(true)
 
     if (isRegister) {
@@ -27,7 +80,17 @@ export function LoginModule() {
         if (response.token) {
           await login(username, password)
         } else {
-          setError(response.error || 'Error al registrar')
+          const errorMsg = response.error
+          if (Array.isArray(errorMsg)) {
+            const passError = errorMsg.find((e: any) => e.path?.includes('password'))
+            if (passError) {
+              setError(passError.message)
+            } else {
+              setError('Error al registrar')
+            }
+          } else {
+            setError(errorMsg || 'Error al registrar')
+          }
         }
       } catch (err) {
         setError('Error al registrar usuario')
@@ -60,9 +123,12 @@ export function LoginModule() {
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => handleUsernameChange(e.target.value)}
+                onBlur={() => isRegister && setErrors(prev => ({ ...prev, username: validateUsername(username) }))}
                 required
+                className={errors.username ? 'border-red-500' : ''}
               />
+              {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
             </div>
             <div className="relative">
               <Label htmlFor="password">Contraseña</Label>
@@ -70,9 +136,10 @@ export function LoginModule() {
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => handlePasswordChange(e.target.value)}
+                onBlur={() => isRegister && setErrors(prev => ({ ...prev, password: validatePassword(password) }))}
                 required
-                className="pr-10"
+                className={`pr-10 ${errors.password ? 'border-red-500' : ''}`}
               />
               <button
                 type="button"
@@ -81,6 +148,7 @@ export function LoginModule() {
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
+              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
@@ -90,7 +158,7 @@ export function LoginModule() {
               type="button" 
               variant="link" 
               className="w-full" 
-              onClick={() => setIsRegister(!isRegister)}
+              onClick={() => { setIsRegister(!isRegister); setErrors({}); setError(''); }}
             >
               {isRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
             </Button>
